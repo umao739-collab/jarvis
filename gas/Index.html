@@ -8,56 +8,76 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#02090f;--panel:rgba(5,22,31,.76);--main:#5fdcff;--band:#1c86bd;--accent:#ffb02e;--ink:#d6f4ff;--muted:#8fb3c6;--line:rgba(95,220,255,.3);--rgb:95,220,255;--core:rgba(3,20,30,.94);--bd:288 654.5;--ad:74 717.7}
-[data-char="friday"]{--bg:#0b0504;--panel:rgba(26,13,9,.82);--main:#ff8a1f;--band:#e4600a;--accent:#3fc4a6;--ink:#ffe9d6;--muted:#d1ad96;--line:rgba(255,138,31,.34);--rgb:255,138,31;--core:rgba(20,8,4,.94);--bd:524 418.5;--ad:132 659.7}
+:root{--bg:#02090f;--panel:rgba(5,24,34,.72);--main:#5fdcff;--band:#1c86bd;--accent:#ffb02e;--ink:#d6f4ff;--muted:#8fb3c6;--line:rgba(95,220,255,.34);--rgb:95,220,255;--core:rgba(3,20,30,.94);--bd:288 654.5;--ad:74 717.7}
+[data-char="friday"]{--bg:#0b0504;--panel:rgba(30,14,8,.74);--main:#ff8a1f;--band:#e4600a;--accent:#3fc4a6;--ink:#ffe9d6;--muted:#d1ad96;--line:rgba(255,138,31,.38);--rgb:255,138,31;--core:rgba(20,8,4,.94);--bd:524 418.5;--ad:132 659.7}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Noto Sans JP",sans-serif}
-body{background-image:linear-gradient(rgba(var(--rgb),.045) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--rgb),.045) 1px,transparent 1px);background-size:40px 40px}
+body{background:radial-gradient(ellipse at 50% 42%,rgba(var(--rgb),.13),transparent 60%),var(--bg);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(var(--rgb),.035) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--rgb),.035) 1px,transparent 1px);background-size:44px 44px}
 .orb{font-family:"Orbitron","Zen Maru Gothic",sans-serif}
-#app{min-height:100vh;display:flex;flex-direction:column;gap:12px;padding:16px 22px}
-header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px}
-#clock{font-size:42px;font-weight:700;color:var(--main);line-height:1}
-#clock small{font-size:18px;color:var(--muted);margin-left:6px}
+#app{position:relative;min-height:100vh;display:flex;flex-direction:column;gap:10px;padding:14px 22px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding-bottom:8px}
+#clock{font-size:40px;font-weight:700;color:var(--main);line-height:1}
+#clock small{font-size:17px;color:var(--muted);margin-left:6px}
 #date{font-size:15px}
 #title{text-align:center}
 #title .n{font-size:20px;font-weight:700;letter-spacing:.3em;padding-left:.3em}
-#title .s{margin-top:4px;font-size:12px;color:var(--muted)}
-#wx{display:flex;justify-content:flex-end;align-items:center;gap:14px;text-align:right}
-#wx .t{font-size:32px;color:var(--main)}
-#wx .d{font-size:13px}
-#wx .u{font-size:11px;color:var(--muted);margin-top:3px}
-main{flex:1;display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1.5fr) minmax(260px,1fr);gap:18px;min-height:0}
-.col{display:flex;flex-direction:column;gap:12px}
-.panel{position:relative;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px 16px;flex:1}
-.panel::before{content:"";position:absolute;left:14px;top:-1px;width:26px;height:3px;background:var(--main);border-radius:2px}
-.ph{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--main);display:flex;justify-content:space-between;align-items:baseline}
-.ph span{font-family:"Orbitron",sans-serif;font-size:10px;font-weight:500;letter-spacing:.2em;color:var(--muted)}
-.row{display:flex;gap:10px;align-items:baseline;padding:4px 0;border-bottom:1px solid rgba(var(--rgb),.14);font-size:13px;line-height:1.5}
-.row:last-child{border-bottom:0}
-.row b{flex:none;min-width:54px;font-family:"Orbitron",sans-serif;font-size:12px;font-weight:500;color:var(--main)}
-.muted{color:var(--muted);font-size:13px}
-.grid6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.cell{border:1px solid var(--line);border-radius:10px;padding:5px 8px}
-.cell small{display:block;font-size:11px;color:var(--muted)}
-.cell em{font-style:normal;font-family:"Orbitron",sans-serif;font-size:16px}
-.nums{display:flex;justify-content:space-between}
-.nums div{text-align:center;flex:1}
-.nums .v{font-family:"Orbitron",sans-serif;font-size:26px}
-.nums .l{font-size:11px;color:var(--muted)}
-.ok{color:var(--main)} .ng{color:var(--accent)}
-#center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
-svg.hud{width:min(100%,480px);height:auto}
+#title .s{margin-top:3px;font-size:12px;color:var(--muted)}
+#hint{font-size:12px;color:var(--muted);text-align:right;max-width:230px;line-height:1.5}
+#stage{position:relative;flex:1;min-height:600px}
+#ringBox{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:min(44vw,430px);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+svg.hud{width:100%;height:auto}
+#talk{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:min(60vw,620px);text-align:center;font-size:15px;line-height:1.7;min-height:50px;text-shadow:0 0 12px var(--bg),0 0 4px var(--bg);pointer-events:none}
 .ring{fill:none;stroke:var(--main)}
 .r{transform-box:fill-box;transform-origin:center}
 .r1{animation:spin 120s linear infinite}.r2{animation:spin 70s linear infinite reverse}
 .r3{animation:spin 45s linear infinite}.r4{animation:spin 30s linear infinite reverse}.r5{animation:spin 60s linear infinite}
 .speaking .r3{animation-duration:9s}.speaking .r4{animation-duration:6s}.speaking .r5{animation-duration:12s}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.r{animation:none}}
 #state{font-size:11px;fill:var(--main)}
-#talk{width:100%;max-width:560px;text-align:center;font-size:15px;line-height:1.7;min-height:52px}
-footer{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
-#log{font-size:14px;line-height:1.55;min-height:46px}
+
+.panel{position:absolute;left:var(--x);top:var(--y);width:var(--w);z-index:2;border:1px solid var(--line);border-radius:16px;background:var(--panel);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:12px 15px 13px;box-shadow:0 0 0 1px rgba(var(--rgb),.06) inset,0 0 22px rgba(var(--rgb),.14);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;animation:floaty var(--d,8s) ease-in-out infinite alternate;transform:rotate(var(--r,0deg))}
+.panel::before,.panel::after{content:"";position:absolute;width:14px;height:14px;border:2px solid var(--main);pointer-events:none;opacity:.9}
+.panel::before{left:-1px;top:-1px;border-right:0;border-bottom:0;border-top-left-radius:16px}
+.panel::after{right:-1px;bottom:-1px;border-left:0;border-top:0;border-bottom-right-radius:16px}
+.panel:hover{box-shadow:0 0 0 1px rgba(var(--rgb),.2) inset,0 0 30px rgba(var(--rgb),.3)}
+@keyframes floaty{from{transform:translateY(0) rotate(var(--r,0deg))}to{transform:translateY(-7px) rotate(calc(var(--r,0deg) * -.6))}}
+.panel.drag{cursor:grabbing;animation-play-state:paused;z-index:9;box-shadow:0 0 36px rgba(var(--rgb),.4)}
+.panel .x{display:none}
+.panel.zoom{position:fixed;z-index:40;animation:none;transform:none;cursor:default;max-height:84vh;overflow:auto;padding:18px 22px 20px;touch-action:auto;background:rgba(2,12,18,.92);box-shadow:0 0 60px rgba(var(--rgb),.35)}
+[data-char="friday"] .panel.zoom{background:rgba(16,7,4,.93)}
+.panel.zoom.go{transition:left .36s cubic-bezier(.2,.8,.2,1),top .36s cubic-bezier(.2,.8,.2,1),width .36s cubic-bezier(.2,.8,.2,1)}
+.panel.zoom .x{display:block;position:absolute;right:10px;top:8px;width:40px;height:40px;min-height:0;padding:0;border-radius:50%;font-size:16px}
+.panel.zoom .ph{font-size:16px;padding-right:44px}
+.panel.zoom .row,.panel.zoom .muted{font-size:15px}
+.more{display:none}
+.panel.zoom .more{display:block;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+#veil{position:fixed;inset:0;z-index:30;background:rgba(0,4,8,.7);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s}
+#veil.on{opacity:1;pointer-events:auto}
+.ph{margin:0 0 7px;font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--main);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ph span{font-family:"Orbitron",sans-serif;font-size:9px;font-weight:500;letter-spacing:.2em;color:var(--muted)}
+.row{display:flex;gap:10px;align-items:baseline;padding:3px 0;border-bottom:1px solid rgba(var(--rgb),.14);font-size:13px;line-height:1.5}
+.row:last-child{border-bottom:0}
+.row b{flex:none;min-width:52px;font-family:"Orbitron",sans-serif;font-size:11px;font-weight:500;color:var(--main)}
+.muted{color:var(--muted);font-size:13px;line-height:1.55}
+.big{font-family:"Orbitron",sans-serif;font-size:34px;color:var(--main);line-height:1.1}
+.grid6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.cell{border:1px solid var(--line);border-radius:10px;padding:4px 8px}
+.cell small{display:block;font-size:11px;color:var(--muted)}
+.cell em{font-style:normal;font-family:"Orbitron",sans-serif;font-size:15px}
+.nums{display:flex;justify-content:space-between;gap:6px}
+.nums div{text-align:center;flex:1}
+.nums .v{font-family:"Orbitron",sans-serif;font-size:24px}
+.nums .l{font-size:11px;color:var(--muted)}
+.ok{color:var(--main)} .ng{color:var(--accent)}
+
+.decor{position:absolute;pointer-events:none;color:var(--muted);font-family:"Orbitron",sans-serif;font-size:9px;letter-spacing:.18em;opacity:.8}
+.bars{display:flex;align-items:flex-end;gap:3px;height:34px}
+.bars i{display:block;width:5px;background:var(--main);opacity:.7;animation:bar 2.4s ease-in-out infinite alternate}
+@keyframes bar{from{height:20%}to{height:100%}}
+
+footer{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:8px;position:relative;z-index:3}
+#log{font-size:14px;line-height:1.55;min-height:44px}
 #log div{display:flex;gap:10px}
 #log .w{flex:none;width:60px;font-size:11px;color:var(--muted);padding-top:3px}
 #log .you .t{color:var(--muted)}
@@ -65,20 +85,22 @@ footer{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direc
 form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 input[type=text]{flex:1 1 220px;min-width:0;height:48px;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font:inherit;font-size:16px}
 button,select{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
-select{max-width:200px;background:var(--panel)}
+select{max-width:200px;background:var(--bg)}
 button.go{width:48px;padding:0;color:var(--main);font-size:18px}
 button.on{border-color:var(--main);color:var(--main)}
-#boot{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;background:var(--bg)}
+#boot{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;background:var(--bg)}
 #boot button{border-color:var(--main);color:var(--main);font-size:16px;padding:0 34px;min-height:52px}
 #boot .n{font-size:22px;letter-spacing:.3em}
+@media (prefers-reduced-motion:reduce){.r,.panel,.bars i{animation:none}}
 @media (max-width:900px){
   #app{padding:12px}
-  header{grid-template-columns:1fr;text-align:center}
-  #wx{justify-content:center}
-  #clock{font-size:34px}
-  main{grid-template-columns:1fr}
-  #center{order:-1}
-  svg.hud{width:min(80%,320px)}
+  header{flex-wrap:wrap;justify-content:center;text-align:center}
+  #hint{display:none}
+  #stage{min-height:0;display:flex;flex-direction:column;gap:12px}
+  #ringBox{position:static;transform:none;width:min(78%,300px);margin:0 auto;order:-2}
+  #talk{position:static;transform:none;width:100%;order:-1}
+  .panel{position:relative;left:auto;top:auto;width:auto;animation:none;transform:none;touch-action:manipulation}
+  .decor{display:none}
 }
 </style>
 </head>
@@ -89,24 +111,19 @@ button.on{border-color:var(--main);color:var(--main)}
   <div class="muted">タップすると、声も出ます</div>
 </div>
 
+<div id="veil"></div>
 <div id="app">
   <header>
-    <div style="display:flex;align-items:center;gap:16px;justify-content:inherit">
+    <div style="display:flex;align-items:center;gap:16px">
       <div id="clock" class="orb">--:--<small>--</small></div>
       <div id="date">--</div>
     </div>
     <div id="title"><div class="orb n" id="name">J.A.R.V.I.S.</div><div class="s">校務 統合コンソール</div></div>
-    <div id="wx"><div><div class="d" id="wxd">天気を取得中…</div><div class="u" id="wxu"></div></div><div class="t orb" id="wxt"></div></div>
+    <div id="hint">パネルをタップで拡大。ドラッグで好きな場所へ動かせます。</div>
   </header>
 
-  <main>
-    <div class="col">
-      <section class="panel"><h2 class="ph">今日の予定<span>SCHEDULE</span></h2><div id="pSched"></div></section>
-      <section class="panel"><h2 class="ph">下校時刻<span>DISMISSAL</span></h2><div class="grid6" id="pDis"></div><div class="muted" id="pDisTm" style="margin-top:8px"></div></section>
-      <section class="panel"><h2 class="ph">給食<span>LUNCH</span></h2><div id="pLunch"></div></section>
-    </div>
-
-    <div id="center">
+  <div id="stage">
+    <div id="ringBox">
       <svg class="hud" id="hud" viewBox="0 0 400 400" aria-hidden="true">
         <circle class="ring" cx="200" cy="200" r="198" style="stroke-opacity:.35"/>
         <g class="r r1"><circle class="ring" cx="200" cy="200" r="190" style="stroke-width:6;stroke-dasharray:1.3 8.65;stroke-opacity:.6"/><circle class="ring" cx="200" cy="200" r="190" style="stroke-width:11;stroke-dasharray:2.2 47.54"/></g>
@@ -126,15 +143,13 @@ button.on{border-color:var(--main);color:var(--main)}
         <text id="ringName" x="200" y="198" text-anchor="middle" textLength="104" lengthAdjust="spacingAndGlyphs" style="font-family:Orbitron,sans-serif;font-size:14px;font-weight:700;fill:var(--ink)">J.A.R.V.I.S.</text>
         <text id="state" x="200" y="218" text-anchor="middle">待機中</text>
       </svg>
-      <div id="talk"></div>
     </div>
+    <div id="talk"></div>
 
-    <div class="col">
-      <section class="panel"><h2 class="ph">今週の行事<span>EVENTS</span></h2><div id="pWeek"></div></section>
-      <section class="panel"><h2 class="ph">職員の動き<span>STAFF</span></h2><div id="pStaff"></div></section>
-      <section class="panel"><h2 class="ph">システム<span>SYSTEMS</span></h2><div id="pSys"></div></section>
-    </div>
-  </main>
+    <div class="decor" style="left:40%;top:2%"><div>SYS ▸ ONLINE</div><div style="margin-top:4px">LAT 34.68　LON 135.80</div></div>
+    <div class="decor" style="left:61%;top:47%"><div class="bars"><i style="animation-delay:-.2s"></i><i style="animation-delay:-.9s"></i><i style="animation-delay:-1.5s"></i><i style="animation-delay:-.5s"></i><i style="animation-delay:-1.9s"></i><i style="animation-delay:-1.2s"></i><i style="animation-delay:-.7s"></i></div><div style="margin-top:4px">LINK 5G　SYNC</div></div>
+    <div class="decor" style="left:3%;top:94%"><div>▸ 校務データ　同期済み</div></div>
+  </div>
 
   <footer>
     <div id="log"></div>
@@ -152,6 +167,7 @@ button.on{border-color:var(--main);color:var(--main)}
       <button type="button" id="bChar">FRIDAYに切り替え</button>
       <button type="button" id="bMute" class="on">声：オン</button>
       <select id="selVoice" aria-label="声の選択"></select>
+      <button type="button" id="bReset">パネルを並べ直す</button>
     </form>
   </footer>
 </div>
@@ -252,70 +268,225 @@ button.on{border-color:var(--main);color:var(--main)}
     return h < 11 ? 'おはようございます' : (h < 18 ? 'こんにちは' : 'こんばんは');
   }
 
-  /* ---------- 画面の描画 ---------- */
-  function render(d) {
-    data = d;
-    var t = d.today;
+  /* ---------- パネル（散りばめ・拡大・ドラッグ） ---------- */
+  var PANELS = [
+    { k: 'sched', t: '今日の予定', en: 'SCHEDULE', x: '2%',  y: '1%',  w: '270px', r: '-1.2deg', d: '8s' },
+    { k: 'dis',   t: '下校時刻',   en: 'DISMISSAL', x: '1%',  y: '31%', w: '350px', r: '.8deg',   d: '9s' },
+    { k: 'tm',    t: '明日の下校', en: 'TOMORROW', x: '4%',  y: '66%', w: '235px', r: '-.7deg',  d: '7s' },
+    { k: 'lunch', t: '給食',       en: 'LUNCH',    x: '22%', y: '2%',  w: '230px', r: '1deg',    d: '10s' },
+    { k: 'wx',    t: '天気',       en: 'WEATHER',  x: '22%', y: '74%', w: '170px', r: '-1.4deg', d: '6.5s' },
+    { k: 'week',  t: '今週の行事', en: 'EVENTS',   x: '71%', y: '1%',  w: '310px', r: '1deg',    d: '8.5s' },
+    { k: 'staff', t: '職員の動き', en: 'STAFF',    x: '80%', y: '34%', w: '225px', r: '-.9deg',  d: '7.5s' },
+    { k: 'sys',   t: 'システム',   en: 'SYSTEMS',  x: '69%', y: '64%', w: '255px', r: '1.2deg',  d: '9.5s' }
+  ];
+  var saved = {};
+  try { saved = JSON.parse(store('jarvis.layout') || '{}') || {}; } catch (e) { saved = {}; }
+  var zIdx = 10, open = null;
 
-    clear($('pSched'));
-    if (d.calendar && d.calendar.length) {
-      d.calendar.forEach(function (e) { $('pSched').appendChild(row(e.time, e.title)); });
-    } else {
-      $('pSched').appendChild(el('div', 'muted', d.status.calendar ? '今日の予定はありません' : 'カレンダーを読めませんでした'));
+  function isMobile() { return window.matchMedia('(max-width:900px)').matches; }
+
+  function buildPanels() {
+    var stage = $('stage');
+    PANELS.forEach(function (p) {
+      var sec = el('section', 'panel');
+      sec.id = 'P_' + p.k;
+      sec.setAttribute('data-k', p.k);
+      sec.style.setProperty('--x', p.x); sec.style.setProperty('--y', p.y);
+      sec.style.setProperty('--w', p.w); sec.style.setProperty('--r', p.r);
+      sec.style.setProperty('--d', p.d);
+      var h = el('h2', 'ph', p.t);
+      h.appendChild(el('span', '', p.en));
+      var x = el('button', 'x', '✕'); x.type = 'button'; x.setAttribute('aria-label', '閉じる');
+      var body = el('div', 'body'); body.id = 'b_' + p.k;
+      var more = el('div', 'more'); more.id = 'm_' + p.k;
+      sec.appendChild(x); sec.appendChild(h); sec.appendChild(body); sec.appendChild(more);
+      stage.appendChild(sec);
+      place(sec);
+      attach(sec, x);
+    });
+  }
+  function place(sec) {
+    var k = sec.getAttribute('data-k');
+    if (saved[k] && !isMobile()) { sec.style.left = saved[k][0] + '%'; sec.style.top = saved[k][1] + '%'; }
+    else { sec.style.left = ''; sec.style.top = ''; }
+  }
+
+  function attach(sec, xBtn) {
+    var sx, sy, ox, oy, moved, down = false, sr;
+    sec.addEventListener('pointerdown', function (e) {
+      if (sec.classList.contains('zoom') || e.target === xBtn) return;
+      down = true; moved = false; sx = e.clientX; sy = e.clientY;
+      sr = $('stage').getBoundingClientRect();
+      var r = sec.getBoundingClientRect();
+      ox = r.left - sr.left; oy = r.top - sr.top;
+      try { sec.setPointerCapture(e.pointerId); } catch (er) {}
+    });
+    sec.addEventListener('pointermove', function (e) {
+      if (!down) return;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
+      if (!moved && Math.sqrt(dx * dx + dy * dy) > 7 && !isMobile()) {
+        moved = true; sec.classList.add('drag'); sec.style.zIndex = ++zIdx;
+      }
+      if (moved) {
+        var nx = Math.max(0, Math.min(sr.width - sec.offsetWidth, ox + dx));
+        var ny = Math.max(0, Math.min(sr.height - 40, oy + dy));
+        sec.style.left = nx + 'px'; sec.style.top = ny + 'px';
+      }
+    });
+    function end(e) {
+      if (!down) return;
+      down = false;
+      try { sec.releasePointerCapture(e.pointerId); } catch (er) {}
+      if (moved) {
+        sec.classList.remove('drag');
+        var l = parseFloat(sec.style.left), t = parseFloat(sec.style.top);
+        var k = sec.getAttribute('data-k');
+        saved[k] = [Math.round(l / sr.width * 1000) / 10, Math.round(t / sr.height * 1000) / 10];
+        sec.style.left = saved[k][0] + '%'; sec.style.top = saved[k][1] + '%';
+        store('jarvis.layout', JSON.stringify(saved));
+      } else if (e.type === 'pointerup') {
+        openPanel(sec);
+      }
     }
+    sec.addEventListener('pointerup', end);
+    sec.addEventListener('pointercancel', end);
+    xBtn.addEventListener('click', function (e) { e.stopPropagation(); closePanel(); });
+  }
 
-    var dis = $('pDis'); clear(dis);
+  function openPanel(sec) {
+    if (open) return;
+    open = { sec: sec, rect: sec.getBoundingClientRect(), ph: null };
+    var r = open.rect;
+    if (getComputedStyle(sec).position === 'relative') {
+      var ph = document.createElement('div');
+      ph.style.height = r.height + 'px';
+      sec.parentNode.insertBefore(ph, sec);
+      open.ph = ph;
+    }
+    sec.classList.add('zoom');
+    sec.style.left = r.left + 'px'; sec.style.top = r.top + 'px'; sec.style.width = r.width + 'px';
+    void sec.offsetWidth;
+    sec.classList.add('go');
+    $('veil').classList.add('on');
+    var w = Math.min(window.innerWidth * 0.92, 640);
+    requestAnimationFrame(function () {
+      sec.style.width = w + 'px';
+      sec.style.left = ((window.innerWidth - w) / 2) + 'px';
+      sec.style.top = Math.max(12, window.innerHeight * 0.08) + 'px';
+    });
+  }
+  function closePanel() {
+    if (!open) return;
+    var o = open; open = null;
+    var sec = o.sec;
+    $('veil').classList.remove('on');
+    sec.style.left = o.rect.left + 'px'; sec.style.top = o.rect.top + 'px'; sec.style.width = o.rect.width + 'px';
+    setTimeout(function () {
+      sec.classList.remove('zoom'); sec.classList.remove('go');
+      sec.style.width = '';
+      place(sec);
+      if (o.ph && o.ph.parentNode) o.ph.parentNode.removeChild(o.ph);
+    }, 380);
+  }
+  $('veil').addEventListener('click', closePanel);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
+
+  /* ---------- 画面の描画 ---------- */
+  function fill(k, fn) {
+    var b = $('b_' + k), m = $('m_' + k);
+    clear(b); clear(m);
+    fn(b, m);
+  }
+  function gridOf(info) {
+    var g = el('div', 'grid6');
     for (var i = 0; i < 6; i++) {
       var c = el('div', 'cell');
       c.appendChild(el('small', '', (i + 1) + '年'));
-      c.appendChild(el('em', '', (t && t.times[i]) || '—'));
-      dis.appendChild(c);
+      c.appendChild(el('em', '', (info && info.times[i]) || '—'));
+      g.appendChild(c);
     }
-    var tm = d.tomorrow;
-    $('pDisTm').textContent = '明日：' + dismissalShort(tm) + (tm && tm.event ? '（' + tm.event + '）' : '');
+    return g;
+  }
+  function render(d) {
+    data = d;
+    var t = d.today, tm = d.tomorrow;
 
-    var lu = $('pLunch'); clear(lu);
-    if (d.lunch) {
-      var n = el('div', 'nums');
-      [[d.lunch.kids, '児童'], [d.lunch.adults, '教職員'], [d.lunch.meals, '合計']].forEach(function (x) {
-        var b = el('div');
-        b.appendChild(el('div', 'v', x[0] === null ? '—' : String(x[0])));
-        b.appendChild(el('div', 'l', x[1]));
-        n.appendChild(b);
-      });
-      lu.appendChild(n);
-    } else {
-      lu.appendChild(el('div', 'muted', '今日は給食の登録がありません'));
-    }
-
-    var wk = $('pWeek'); clear(wk);
-    if (d.week && d.week.length) {
-      d.week.forEach(function (w) { wk.appendChild(row(w.label, w.event)); });
-    } else {
-      wk.appendChild(el('div', 'muted', '行事の登録はありません'));
-    }
-
-    var st = $('pStaff'); clear(st);
-    if (d.staff && d.staff.kinds.length) st.appendChild(el('div', '', '本日：' + d.staff.kinds.join('・') + ' あり'));
-    else st.appendChild(el('div', 'muted', d.staff ? '本日の出張・年休などはありません' : '読み込めませんでした'));
-
-    var sy = $('pSys'); clear(sy);
-    [['OS ver.1', d.status.os], ['カレンダー', d.status.calendar], ['天気', d.status.weather]].forEach(function (x) {
-      var r = el('div', 'row');
-      r.appendChild(el('b', x[1] ? 'ok' : 'ng', x[1] ? '●' : '◆'));
-      r.appendChild(el('span', '', x[0] + '：' + (x[1] ? '接続中' : '接続できません')));
-      sy.appendChild(r);
+    fill('sched', function (b, m) {
+      if (d.calendar && d.calendar.length) {
+        d.calendar.slice(0, 3).forEach(function (e) { b.appendChild(row(e.time, e.title)); });
+        if (d.calendar.length > 3) b.appendChild(el('div', 'muted', 'ほか ' + (d.calendar.length - 3) + ' 件（タップで全部）'));
+        d.calendar.slice(3).forEach(function (e) { m.appendChild(row(e.time, e.title)); });
+        m.appendChild(el('div', 'muted', 'Googleカレンダー（自分の予定）より'));
+      } else {
+        b.appendChild(el('div', 'muted', d.status.calendar ? '今日の予定はありません' : 'カレンダーを読めませんでした'));
+      }
     });
 
-    if (d.weather) {
-      $('wxd').textContent = d.weather.text + (d.weather.pop !== null ? '　降水 ' + d.weather.pop + '%' : '') + '　風 ' + d.weather.wind + 'm/s';
-      $('wxt').textContent = d.weather.temp + '°C';
-    } else {
-      $('wxd').textContent = '天気を取得できません';
-      $('wxt').textContent = '';
-    }
-    var u = new Date();
-    $('wxu').textContent = '更新 ' + u.getHours() + ':' + (u.getMinutes() < 10 ? '0' : '') + u.getMinutes();
+    fill('dis', function (b, m) {
+      b.appendChild(gridOf(t));
+      m.appendChild(el('div', '', t && t.event ? '本日の行事：' + t.event : '本日の行事：なし'));
+      m.appendChild(el('div', 'muted', '「◯月行事予定_職員用」より（結合セルは補って読んでいます）'));
+    });
+
+    fill('tm', function (b, m) {
+      b.appendChild(el('div', '', dismissalShort(tm)));
+      if (tm && tm.event) b.appendChild(el('div', 'muted', tm.event));
+      m.appendChild(gridOf(tm));
+    });
+
+    fill('lunch', function (b, m) {
+      if (d.lunch) {
+        var n = el('div', 'nums');
+        [[d.lunch.kids, '児童'], [d.lunch.adults, '教職員'], [d.lunch.meals, '合計']].forEach(function (x) {
+          var c = el('div');
+          c.appendChild(el('div', 'v', x[0] === null ? '—' : String(x[0])));
+          c.appendChild(el('div', 'l', x[1]));
+          n.appendChild(c);
+        });
+        b.appendChild(n);
+        if (d.lunch.milk !== null) m.appendChild(el('div', '', '牛乳：' + d.lunch.milk + ' 本'));
+      } else {
+        b.appendChild(el('div', 'muted', '今日は給食の登録がありません'));
+      }
+    });
+
+    fill('wx', function (b, m) {
+      if (d.weather) {
+        b.appendChild(el('div', 'big', d.weather.temp + '°C'));
+        b.appendChild(el('div', 'muted', d.weather.text));
+        m.appendChild(el('div', '', '降水確率：' + (d.weather.pop !== null ? d.weather.pop + '%' : '—')));
+        m.appendChild(el('div', '', '風：' + d.weather.wind + ' m/s'));
+        m.appendChild(el('div', 'muted', '奈良市付近（Open-Meteo）'));
+      } else {
+        b.appendChild(el('div', 'muted', '天気を取得できません'));
+      }
+    });
+
+    fill('week', function (b, m) {
+      if (d.week && d.week.length) {
+        d.week.slice(0, 3).forEach(function (w) { b.appendChild(row(w.label, w.event)); });
+        d.week.slice(3).forEach(function (w) { m.appendChild(row(w.label, w.event)); });
+      } else {
+        b.appendChild(el('div', 'muted', '行事の登録はありません'));
+      }
+    });
+
+    fill('staff', function (b, m) {
+      if (d.staff && d.staff.kinds.length) b.appendChild(el('div', '', '本日：' + d.staff.kinds.join('・') + ' あり'));
+      else b.appendChild(el('div', 'muted', d.staff ? '出張・年休などなし' : '読み込めませんでした'));
+      m.appendChild(el('div', 'muted', '氏名は表示しません。種類だけを出しています。'));
+    });
+
+    fill('sys', function (b, m) {
+      [['OS ver.1', d.status.os], ['カレンダー', d.status.calendar], ['天気', d.status.weather]].forEach(function (x) {
+        var r = el('div', 'row');
+        r.appendChild(el('b', x[1] ? 'ok' : 'ng', x[1] ? '●' : '◆'));
+        r.appendChild(el('span', '', x[0] + '：' + (x[1] ? '接続中' : '接続できません')));
+        b.appendChild(r);
+      });
+      var u = new Date();
+      m.appendChild(el('div', 'muted', '最終更新 ' + u.getHours() + ':' + (u.getMinutes() < 10 ? '0' : '') + u.getMinutes() + '（5分ごとに自動更新）'));
+    });
   }
 
   /* ---------- 会話・声 ---------- */
@@ -467,6 +638,12 @@ button.on{border-color:var(--main);color:var(--main)}
     say('この声でお話しします。');
   };
 
+  $('bReset').onclick = function () {
+    saved = {}; store('jarvis.layout', '{}');
+    Array.prototype.forEach.call(document.querySelectorAll('.panel'), place);
+    say('パネルを元の位置に並べ直しました。');
+  };
+  buildPanels();
   applyTheme(store('jarvis.theme') || 'jarvis');
   if (store('jarvis.muted') === '1') { muted = true; $('bMute').textContent = '声：オフ'; $('bMute').classList.remove('on'); }
   if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
