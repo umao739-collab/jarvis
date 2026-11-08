@@ -165,6 +165,7 @@ button.on{border-color:var(--main);color:var(--main)}
   var WD = ['日', '月', '火', '水', '木', '金', '土'];
   var $ = function (id) { return document.getElementById(id); };
   var theme = 'jarvis', data = null, muted = false, voices = [];
+  var DEFAULT_VOICE = 'Chrome OS 日本語 4';
 
   function store(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; }
@@ -351,13 +352,16 @@ button.on{border-color:var(--main);color:var(--main)}
   function loadVoices() {
     if (!('speechSynthesis' in window)) return;
     voices = speechSynthesis.getVoices().filter(function (v) { return /^ja/i.test(v.lang); });
-    var sel = $('selVoice'), keep = store('jarvis.voice') || sel.value;
+    var sel = $('selVoice'), saved = store('jarvis.voice');
+    var names = voices.map(function (v) { return v.name; });
+    var pick = names.indexOf(saved) >= 0 ? saved
+      : (names.indexOf(DEFAULT_VOICE) >= 0 ? DEFAULT_VOICE : names[0]);
     clear(sel);
     voices.forEach(function (v) {
       var o = el('option', '', v.name.replace('Android Google 音声認識と音声合成サービス ', 'Google '));
       o.value = v.name; sel.appendChild(o);
     });
-    if (keep) sel.value = keep;
+    if (pick) sel.value = pick;
   }
 
   /* ---------- コマンド（固定パターン） ---------- */
