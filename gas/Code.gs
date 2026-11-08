@@ -217,3 +217,84 @@ function weatherInfo_() {
     wind: Math.round(c.wind_speed_10m)
   };
 }
+
+
+/* ============ メール・チャット（ログインしている本人の分だけ） ============ */
+
+function shorten_(t, n) {
+  t = String(t || '').replace(/\s+/g, ' ').trim();
+  return t.length > n ? t.slice(0, n) + '…' : t;
+}
+
+function fromName_(raw) {
+  raw = String(raw || '');
+  const m = raw.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>/);
+  if (m) return (m[1].trim() || m[2]);
+  return raw.trim();
+}
+
+/** Gmail の未読（読み取り専用）と、Google Chat の新着をまとめて返す。片方が失敗しても、もう片方は返す */
+function getInbox() {
+  const out = {
+    mail: { ok: false, unread: 0, items: [], err: '' },
+    chat: { ok: false, count: 0, items: [], err: '' }
+  };
+
+  try {
+    out.mail.unread = Gmail.Users.Labels.get('me', 'INBOX').messagesUnread || 0;
+    const list = Gmail.Users.Messages.list('me', { q: 'is:unread in:inbox', maxResults: 8 });
+    (list.messages || []).forEach(function (m) {
+      const g = Gmail.Users.Messages.get('me', m.id, {
+        format: 'metadata', metadataHeaders: ['From', 'Subject']
+      });
+      const h = {};
+      ((g.payload && g.payload.headers) || []).forEach(function (x) { h[x.name] = x.value; });
+      out.mail.items.push({
+        from: shorten_(fromName_(h.From), 24),
+        subject: shorten_(h.Subject || '（件名なし）', 60),
+        time: fmt_(new Date(+g.internalDate), 'M/d HH:mm')
+      });
+    });
+    out.mail.ok = true;
+  } catch (e) {
+    out.mail.err = shorten_((e && e.message) || e, 120);
+  }
+
+  try {
+    const since = new Date(Date.now() - 3 * 86400000).toISOString();
+    const spaces = (Chat.Spaces.list({ pageSize: 30 }).spaces) || [];
+    const found = [];
+    spaces.forEach(function (sp) {
+      let after = since;
+      try {
+        const id = sp.name.split('/')[1];
+        const rs = Chat.Users.Spaces.getSpaceReadState('users/me/spaces/' + id + '/spaceReadState');
+        if (rs && rs.lastReadTime) after = rs.lastReadTime;
+      } catch (e) { /* 既読位置が取れない部屋は、直近3日分を見る */ }
+      let res;
+      try {
+        res = Chat.Spaces.Messages.list(sp.name, {
+          pageSize: 10, orderBy: 'createTime desc', filter: 'createTime > "' + after + '"'
+        });
+      } catch (e) { return; }
+      (res.messages || []).forEach(function (m) {
+        found.push({
+          t: m.createTime,
+          room: shorten_(sp.displayName || '個別チャット', 20),
+          sender: shorten_((m.sender && (m.sender.displayName || '')) || '', 16) || '（送信者）',
+          text: shorten_(m.text || m.formattedText || '（本文なし）', 60)
+        });
+      });
+    });
+    found.sort(function (a, b) { return a.t < b.t ? 1 : -1; });
+    out.chat.count = found.length;
+    out.chat.items = found.slice(0, 10).map(function (x) {
+      return { room: x.room, sender: x.sender, text: x.text, time: fmt_(new Date(x.t), 'M/d HH:mm') };
+    });
+    out.chat.ok = true;
+  } catch (e) {
+    out.chat.err = shorten_((e && e.message) || e, 120);
+  }
+
+  return out;
+}
