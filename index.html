@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#02090f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script>
+/* 描画前にキャラクター設定を反映して、色のちらつきを防ぐ */
+(function () {
+  try {
+    if (localStorage.getItem('friday.theme') !== 'jarvis') { // 既定はフライデー
+      document.documentElement.setAttribute('data-theme', 'friday');
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0b0504');
+    }
+  } catch (e) { /* 無視 */ }
+})();
+</script>
+<title>F.R.I.D.A.Y.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&family=Orbitron:wght@600&display=swap" rel="stylesheet">
+<style>
+  /* HUDは常にダーク配色で表示する */
+  :root {
+    /* 既定：J.A.R.V.I.S.（青） */
+    --bg: #02090f;
+    --panel: #05161f;
+    --main: #5fdcff;
+    --band: #1c86bd;
+    --accent: #ffb02e;
+    --ink: #d6f4ff;
+    --muted: #7aa5ba;
+    --line: rgba(95, 220, 255, .28);
+    --glow-rgb: 95, 220, 255;
+    --glow2-rgb: 28, 134, 189;
+    --start-bg: #06202e;
+    --dot: var(--accent);
+    --band-dash: 288 654.5;
+    --acc-dash: 74 717.7;
+    --acc2-dash: 36 755.7;
+    --acc2-off: -380;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* F.R.I.D.A.Y.（オレンジ） */
+  :root[data-theme="friday"] {
+    --bg: #0b0504;
+    --panel: #1a0d09;
+    --main: #ff8a1f;
+    --band: #e4600a;
+    --accent: #3fc4a6;
+    --ink: #ffe9d6;
+    --muted: #c9a189;
+    --line: rgba(255, 138, 31, .32);
+    --glow-rgb: 255, 138, 31;
+    --glow2-rgb: 228, 96, 10;
+    --start-bg: #2a0f08;
+    --dot: var(--main);
+    --band-dash: 524 418.5;
+    --acc-dash: 132 659.7;
+    --acc2-dash: 44 747.7;
+    --acc2-off: -420;
+  }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    height: 100%; margin: 0; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .app {
+    height: 100%; max-width: 720px; margin: 0 auto;
+    padding: 0 16px 12px;
+    display: flex; flex-direction: column;
+  }
+
+  /* ---------- ヘッダー ---------- */
+  .top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0 4px; gap: 12px;
+  }
+  .clock { font-family: "Orbitron", "Noto Sans JP", sans-serif; font-size: 20px; color: var(--main); letter-spacing: .06em; line-height: 1.1; }
+  .date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .top-right { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 10px; font-size: 13px; color: var(--muted); }
+  .chip {
+    min-height: 36px; padding: 0 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: transparent; color: var(--ink);
+    font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .chip[aria-pressed="false"] { color: var(--muted); }
+
+  /* ---------- HUD ---------- */
+  .hud-area {
+    flex: 1 1 auto; min-height: 0; position: relative;
+    display: grid; place-items: center;
+  }
+  .hud-area::before {
+    content: ""; position: absolute; width: 78%; aspect-ratio: 1; max-height: 78%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--glow-rgb),.16) 0%, rgba(var(--glow2-rgb),.08) 45%, transparent 70%);
+    pointer-events: none;
+  }
+  .hud { position: relative; width: 100%; height: 100%; max-width: 520px; max-height: 100%; }
+
+  .layer {
+    opacity: 0; transform: scale(1.18);
+    transform-box: fill-box; transform-origin: center;
+    transition: opacity .9s ease var(--d, 0s), transform 1.2s cubic-bezier(.2,.7,.2,1) var(--d, 0s);
+  }
+  body.booted .layer { opacity: 1; transform: none; }
+
+  .thin { fill: none; stroke: var(--main); stroke-opacity: .55; stroke-width: 1; transition: stroke .5s; }
+  .tick line { stroke: var(--main); stroke-width: 1; stroke-opacity: .7; transition: stroke .5s; }
+  .tick line.major { stroke-width: 1.7; stroke-opacity: 1; }
+  .dash { fill: none; stroke: var(--main); stroke-opacity: .5; stroke-width: 2; stroke-dasharray: 14 5 2 5; }
+  .band-base { fill: none; stroke: var(--band); stroke-opacity: .16; stroke-width: 22; }
+  .band-arc { fill: none; stroke: var(--band); stroke-opacity: .82; stroke-width: 22; stroke-dasharray: var(--band-dash); }
+  .band-gaps line { stroke: var(--bg); stroke-width: 1.5; }
+  .dot { fill: var(--dot); }
+  .accent-faint { fill: none; stroke: var(--accent); stroke-opacity: .2; stroke-width: 1; }
+  .accent { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: var(--acc-dash); }
+  .acc2 { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: var(--acc2-dash); stroke-dashoffset: var(--acc2-off); opacity: 0; transition: opacity .4s; }
+  .core-disc { fill: rgba(3, 20, 30, .88); }
+  .core-ring { fill: none; stroke: var(--main); stroke-width: 1.6; transition: stroke .5s; }
+  .bar { stroke: var(--main); stroke-width: 2.4; stroke-linecap: round; transition: stroke .5s; }
+  .wordmark { font-family: "Orbitron", sans-serif; font-size: 14px; fill: var(--ink); }
+  .state { font-size: 11px; fill: var(--main); transition: fill .5s; }
+
+  .hud[data-state="thinking"] .acc2 { opacity: 1; }
+  .hud[data-state="thinking"] .bar,
+  .hud[data-state="thinking"] .core-ring,
+  .hud[data-state="thinking"] #rInner .thin,
+  .hud[data-state="thinking"] #ticksInner line { stroke: var(--accent); }
+  .hud[data-state="thinking"] .state { fill: var(--accent); }
+
+  /* ---------- ログ ---------- */
+  .log {
+    flex: 0 0 auto; max-height: min(26vh, 190px); overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 4px 2px; font-size: 15px; line-height: 1.6;
+  }
+  .log p { margin: 0; padding-left: 10px; border-left: 2px solid var(--line); overflow-wrap: anywhere; }
+  .log .ai { border-left-color: var(--main); color: var(--ink); }
+  .log .you { color: var(--muted); }
+  .log .sys { color: var(--muted); font-size: 13px; border-left-color: transparent; padding-left: 12px; }
+
+  /* ---------- 入力 ---------- */
+  .composer { display: flex; gap: 8px; margin-top: 8px; }
+  .composer input {
+    flex: 1 1 auto; min-width: 0; height: 46px; padding: 0 14px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink);
+    font: inherit; font-size: 16px;
+  }
+  .composer input::placeholder { color: var(--muted); }
+  .icon-btn {
+    flex: 0 0 46px; width: 46px; height: 46px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--main);
+    display: grid; place-items: center; cursor: pointer; padding: 0;
+  }
+  .icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- 設定 ---------- */
+  dialog.cfg {
+    background: var(--panel); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px; width: min(92vw, 440px);
+    max-height: 88vh; overflow-y: auto;
+  }
+  dialog.cfg::backdrop { background: rgba(0, 0, 0, .72); }
+  .cfg h2 { margin: 0 0 6px; font-size: 17px; font-weight: 500; }
+  .cfg p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+  .cfg label { display: block; margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .cfg input {
+    display: block; width: 100%; height: 44px; margin-top: 6px; padding: 0 12px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font: inherit; font-size: 16px;
+  }
+  .cfg .cfg-status { min-height: 1.6em; margin-top: 12px; color: var(--ink); }
+  .cfg select {
+    display: block; width: 100%; height: 44px; margin-top: 6px; padding: 0 10px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font: inherit; font-size: 16px;
+  }
+  .cfg input[type="range"] { height: 32px; padding: 0; border: 0; background: transparent; accent-color: var(--main); }
+  .cfg .cfg-info { margin-top: 10px; font-size: 12px; overflow-wrap: anywhere; }
+  .cfg .cfg-sub { margin-top: 18px; color: var(--ink); }
+  .cfg-theme { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .cfg-theme .chip[aria-pressed="true"] { border-color: var(--main); color: var(--ink); }
+  .cfg-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+  /* ---------- 起動画面 ---------- */
+  .start {
+    position: fixed; inset: 0; z-index: 10;
+    display: grid; place-items: center; align-content: center; gap: 22px;
+    background: radial-gradient(circle at 50% 45%, var(--start-bg) 0%, var(--bg) 70%);
+    transition: opacity .6s ease;
+  }
+  .start.gone { opacity: 0; pointer-events: none; }
+  .start-btn {
+    width: min(58vw, 230px); aspect-ratio: 1; border-radius: 50%;
+    border: 1.5px solid var(--main); background: transparent; color: var(--ink);
+    font: 600 15px "Orbitron", sans-serif; letter-spacing: .18em; padding-left: .18em; cursor: pointer;
+    box-shadow: inset 0 0 40px rgba(var(--glow-rgb),.24), 0 0 30px rgba(var(--glow-rgb),.16);
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+  .start-note { margin: 0; font-size: 13px; color: var(--muted); text-align: center; padding: 0 24px; }
+  @keyframes breathe {
+    0%, 100% { box-shadow: inset 0 0 40px rgba(var(--glow-rgb),.24), 0 0 30px rgba(var(--glow-rgb),.16); }
+    50% { box-shadow: inset 0 0 56px rgba(var(--glow-rgb),.38), 0 0 46px rgba(var(--glow-rgb),.28); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .start-btn { animation: none; }
+    .layer { transition-duration: .01s; transition-delay: 0s; }
+  }
+</style>
+</head>
+<body>
+
+<div class="start" id="start">
+  <button class="start-btn" id="startBtn" type="button" aria-label="J.A.R.V.I.S.を起動する">INITIALIZE</button>
+  <p class="start-note">タップすると音声が有効になります</p>
+</div>
+
+<dialog class="cfg" id="cfg" aria-labelledby="cfgTitle">
+  <h2 id="cfgTitle">設定</h2>
+  <p>アイデアの保存とAIとの会話は、あなたのGAS（スプレッドシート）を通して動きます。URLと合言葉はこの端末にだけ保存され、このページには含まれません。空欄のときは、アイデアをこの端末の中に保存し、AIとの会話は使えません。</p>
+
+  <p class="cfg-sub">接続</p>
+  <label for="cfgUrl">GASのURL
+    <input id="cfgUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/…/exec">
+  </label>
+  <label for="cfgToken">合言葉
+    <input id="cfgToken" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+  </label>
+  <div class="cfg-actions">
+    <button class="chip" id="cfgTest" type="button">接続テスト</button>
+    <button class="chip" id="cfgSave" type="button">保存</button>
+    <button class="chip" id="cfgClear" type="button">接続を解除</button>
+  </div>
+
+  <p class="cfg-sub">キャラクター（見た目と声）</p>
+  <div class="cfg-theme" role="group" aria-label="キャラクター">
+    <button class="chip" type="button" data-theme-btn="jarvis" aria-pressed="false">J.A.R.V.I.S.（男性の声）</button>
+    <button class="chip" type="button" data-theme-btn="friday" aria-pressed="true">F.R.I.D.A.Y.（女性の声）</button>
+  </div>
+  <label for="cfgVoice">声（<span id="cfgVoiceOf">フライデー</span>用）
+    <select id="cfgVoice"></select>
+  </label>
+  <label for="cfgPitch">声の高さ <span id="cfgPitchVal">1.0</span>
+    <input id="cfgPitch" type="range" min="0.6" max="1.2" step="0.1" value="1.0">
+  </label>
+  <div class="cfg-actions">
+    <button class="chip" id="cfgVoiceTest" type="button">試し聞き</button>
+  </div>
+  <p class="cfg-info" id="cfgVoiceInfo"></p>
+
+  <p class="cfg-status" id="cfgStatus" role="status"></p>
+  <div class="cfg-actions">
+    <button class="chip" id="cfgClose" type="button">閉じる</button>
+  </div>
+</dialog>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="date"></div>
+    </div>
+    <div class="top-right">
+      <span id="ideaCount">アイデア 0件</span>
+      <button class="chip" id="cfgBtn" type="button">設定</button>
+      <button class="chip" id="muteBtn" type="button" aria-pressed="true">音声 オン</button>
+    </div>
+  </header>
+
+  <main class="hud-area">
+    <svg id="hud" class="hud" viewBox="0 0 400 400" data-state="idle" role="img" aria-label="F.R.I.D.A.Y. の円形ディスプレイ">
+      <!-- 最外周：目盛り -->
+      <g class="layer" style="--d:0s">
+        <g id="rOuter">
+          <circle class="thin" cx="200" cy="200" r="196"/>
+          <g class="tick" id="ticksOuter"></g>
+        </g>
+      </g>
+      <!-- 破線リング -->
+      <g class="layer" style="--d:.25s">
+        <g id="rDash"><circle class="dash" cx="200" cy="200" r="172"/></g>
+      </g>
+      <!-- 帯 -->
+      <g class="layer" style="--d:.5s">
+        <g id="rBand">
+          <circle class="band-base" cx="200" cy="200" r="150"/>
+          <circle class="band-arc" cx="200" cy="200" r="150"/>
+          <g class="band-gaps" id="bandGaps"></g>
+          <g id="dots"></g>
+        </g>
+      </g>
+      <!-- アクセント -->
+      <g class="layer" style="--d:.8s">
+        <g id="rAccent">
+          <circle class="accent-faint" cx="200" cy="200" r="126"/>
+          <circle class="accent" cx="200" cy="200" r="126"/>
+          <circle class="acc2" cx="200" cy="200" r="126"/>
+        </g>
+      </g>
+      <!-- 内側の目盛り -->
+      <g class="layer" style="--d:1.05s">
+        <g id="rInner">
+          <circle class="thin" cx="200" cy="200" r="112"/>
+          <g class="tick" id="ticksInner"></g>
+        </g>
+      </g>
+      <!-- 中心 -->
+      <g class="layer" style="--d:1.3s">
+        <circle class="core-disc" cx="200" cy="200" r="98"/>
+        <circle class="core-ring" cx="200" cy="200" r="100"/>
+        <g id="bars"></g>
+        <text class="wordmark" x="200" y="199" text-anchor="middle" textLength="116" lengthAdjust="spacingAndGlyphs">F.R.I.D.A.Y.</text>
+        <text class="state" id="stateLabel" x="200" y="221" text-anchor="middle">待機中</text>
+      </g>
+    </svg>
+  </main>
+
+  <div class="log" id="log" aria-live="polite"></div>
+
+  <form class="composer" id="composer" autocomplete="off">
+    <button class="icon-btn" id="mic" type="button" aria-label="音声で話しかける" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    </button>
+    <input id="msg" type="text" enterkeyhint="send" placeholder="フライデーに話しかける" aria-label="メッセージ">
+    <button class="icon-btn" id="send" type="submit" aria-label="送信">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+    </button>
+  </form>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const NS = 'http://www.w3.org/2000/svg';
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* キャラクター設定（見た目は上のCSS変数、名前・声・セリフはここ） */
+  const THEMES = {
+    jarvis: {
+      name: 'J.A.R.V.I.S.', kana: 'ジャービス', voice: 'male', meta: '#02090f',
+      greet: 'ジャービス、起動しました。ご用件をどうぞ。',
+      wake: /(ジャービス|ジャーヴィス|jarvis)/i,
+    },
+    friday: {
+      name: 'F.R.I.D.A.Y.', kana: 'フライデー', voice: 'female', meta: '#0b0504',
+      greet: 'フライデー、起動しました。ご用件をどうぞ。',
+      wake: /(フライデー|フライデイ|friday)/i,
+    },
+  };
+  const Theme = { key: 'friday', get cur() { return THEMES[this.key]; } };
+
+  /* =====================================================
+     部品1：HUD（見た目と4つの状態）
+     公開関数：HUD.setState('idle' | 'listening' | 'thinking' | 'speaking')
+     ===================================================== */
+  const HUD = (() => {
+    const svg = $('#hud');
+    const label = $('#stateLabel');
+    const LABEL = { idle: '待機中', listening: '聞き取り中', thinking: '思考中', speaking: '応答中' };
+    const MULT = { idle: 1, listening: 1.8, thinking: 5.5, speaking: 2.6 };
+
+    function mk(tag, attrs) {
+      const el = document.createElementNS(NS, tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      return el;
+    }
+    function ticks(g, n, r0, r1, every, rMajor0) {
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        const major = every && i % every === 0;
+        const s = major && rMajor0 ? rMajor0 : r0;
+        const line = mk('line', {
+          x1: (200 + s * Math.cos(a)).toFixed(2), y1: (200 + s * Math.sin(a)).toFixed(2),
+          x2: (200 + r1 * Math.cos(a)).toFixed(2), y2: (200 + r1 * Math.sin(a)).toFixed(2),
+        });
+        if (major) line.setAttribute('class', 'major');
+        g.appendChild(line);
+      }
+    }
+    ticks($('#ticksOuter'), 120, 184, 190, 5, 179);
+    ticks($('#ticksInner'), 72, 104, 108, 6, 101);
+    ticks($('#bandGaps'), 120, 138, 162, 0, 0);
+    [-104, -97, -90].forEach((deg) => {
+      const a = (deg * Math.PI) / 180;
+      $('#dots').appendChild(mk('circle', {
+        class: 'dot', r: 2.4,
+        cx: (200 + 168 * Math.cos(a)).toFixed(2), cy: (200 + 168 * Math.sin(a)).toFixed(2),
+      }));
+    });
+
+    const BARS = 64;
+    const bars = [];
+    for (let i = 0; i < BARS; i++) {
+      const l = mk('line', { class: 'bar', x1: 0, y1: 0, x2: 0, y2: 0 });
+      $('#bars').appendChild(l);
+      bars.push(l);
+    }
+
+    const rings = [
+      { el: $('#rOuter'), v: 2.5 },
+      { el: $('#rDash'), v: -7 },
+      { el: $('#rBand'), v: 10 },
+      { el: $('#rAccent'), v: -16 },
+      { el: $('#rInner'), v: 5 },
+    ].map((r) => ({ ...r, a: Math.random() * 360 }));
+
+    let state = 'idle';
+    let mult = 1, env = 0, envT = 0, lastEnv = 0, last = performance.now() / 1000;
+    const TAU = Math.PI * 2;
+
+    function amp(i, t) {
+      switch (state) {
+        case 'listening':
+          return 0.08 + (0.25 + 0.35 * env) * (0.5 + 0.5 * Math.sin(t * 6 + i * 0.9));
+        case 'thinking': {
+          const d = (((i / BARS) * TAU - t * 3) % TAU + TAU) % TAU;
+          return 0.08 + 0.9 * Math.exp(-d * 1.5);
+        }
+        case 'speaking':
+          return 0.12 + 0.7 * env * (0.5 + 0.5 * Math.sin(t * 9 + i * 1.7 + (i % 5)));
+        default:
+          return 0.1 + 0.06 * Math.sin(t * 1.2 + i * 0.3);
+      }
+    }
+
+    function frame(now) {
+      const t = now / 1000;
+      const dt = Math.min(0.05, t - last);
+      last = t;
+      const target = MULT[state] * (reduce ? 0.25 : 1);
+      mult += (target - mult) * Math.min(1, dt * 3);
+      for (const r of rings) {
+        r.a = (r.a + r.v * mult * dt) % 360;
+        r.el.setAttribute('transform', 'rotate(' + r.a.toFixed(2) + ' 200 200)');
+      }
+      if (now - lastEnv > 90) { lastEnv = now; envT = Math.random(); }
+      env += (envT - env) * Math.min(1, dt * 10);
+      for (let i = 0; i < BARS; i++) {
+        const th = (i / BARS) * TAU - Math.PI / 2;
+        const r1 = 70 + 3 + amp(i, t) * 22;
+        const c = Math.cos(th), s = Math.sin(th);
+        const b = bars[i];
+        b.setAttribute('x1', (200 + 70 * c).toFixed(2));
+        b.setAttribute('y1', (200 + 70 * s).toFixed(2));
+        b.setAttribute('x2', (200 + r1 * c).toFixed(2));
+        b.setAttribute('y2', (200 + r1 * s).toFixed(2));
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    function setState(s) {
+      state = s;
+      svg.dataset.state = s;
+      label.textContent = LABEL[s];
+    }
+    return { setState };
+  })();
+
+  /* =====================================================
+     部品2：音声出力（読み上げ）
+     公開関数：Voice.speak(text) → Promise<boolean>
+     ===================================================== */
+  const Voice = (() => {
+    const synth = window.speechSynthesis || null;
+    let muted = false;
+    let voice = null;
+    let kind = 'female';
+    let themeKey = 'friday';
+    let pitch = 1.0;
+    let matched = false;
+    let prefs = {}; // キャラクターごとの声の選択 { jarvis:{name,pitch}, friday:{name,pitch} }
+    try { prefs = JSON.parse(localStorage.getItem('friday.voice') || '{}') || {}; } catch (e) { prefs = {}; }
+    // 端末ごとに入っている声が違うため、名前で男女を探す
+    const MALE = /otoya|ichiro|keita|hattori|takumi|masaru|male|男/i;
+    const FEMALE = /kyoko|o-ren|haruka|ayumi|sayaka|nanami|mizuki|female|女/i;
+    function pick() {
+      const vs = synth ? synth.getVoices() : [];
+      const ja = vs.filter((v) => /^ja/i.test(v.lang));
+      const pref = prefs[themeKey] || {};
+      pitch = pref.pitch || 1.0;
+      const chosen = pref.name ? ja.find((v) => v.name === pref.name) : null; // 自分で選んだ声を最優先
+      const want = chosen || (kind === 'male'
+        ? ja.find((v) => MALE.test(v.name) && !FEMALE.test(v.name))
+        : ja.find((v) => FEMALE.test(v.name)));
+      matched = !!want;
+      voice = want || ja.find((v) => /google|siri/i.test(v.name)) || ja[0] || null;
+    }
+    const listeners = [];
+    if (synth) {
+      pick();
+      synth.onvoiceschanged = () => { pick(); listeners.forEach((f) => f()); };
+      // iPhoneでは声の一覧が遅れて届き、通知も来ないことがあるため、起動後の10秒間は確認し直す
+      let tries = 0;
+      const poll = setInterval(() => {
+        tries += 1;
+        const had = voice;
+        pick();
+        if (voice !== had) listeners.forEach((f) => f());
+        if (tries >= 20) clearInterval(poll);
+      }, 500);
+    }
+
+    return {
+      get muted() { return muted; },
+      get matched() { return matched; },
+      get current() { return voice ? voice.name : ''; },
+      setKind(k, key) { kind = k; themeKey = key || themeKey; pick(); },
+      list() {
+        const vs = synth ? synth.getVoices() : [];
+        const seen = {};
+        return vs.filter((v) => /^ja/i.test(v.lang) && !seen[v.name] && (seen[v.name] = true)).map((v) => ({ name: v.name, lang: v.lang }));
+      },
+      onVoicesChanged(f) { listeners.push(f); },
+      getPref(key) { return prefs[key] || {}; },
+      setPref(key, p) {
+        prefs[key] = p;
+        try { localStorage.setItem('friday.voice', JSON.stringify(prefs)); } catch (e) { /* 無視 */ }
+        pick();
+      },
+      setMuted(v) { muted = v; if (v) this.stop(); },
+      available: !!synth,
+      prime() { // iPhoneでは最初のタップ内で一度発声させておく必要がある
+        if (!synth) return;
+        try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) { /* 無視 */ }
+      },
+      stop() { try { if (synth) synth.cancel(); } catch (e) { /* 無視 */ } },
+      speak(text) {
+        return new Promise((resolve) => {
+          if (!synth || muted) { resolve(false); return; }
+          pick(); // 話す直前にも、最新の声の一覧から選び直す
+          synth.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'ja-JP'; u.rate = 1.0; u.pitch = pitch;
+          if (voice) u.voice = voice;
+          let done = false, tm = null;
+          const fin = () => { if (!done) { done = true; clearTimeout(tm); resolve(true); } };
+          u.onend = fin; u.onerror = fin;
+          tm = setTimeout(fin, 3000 + text.length * 350); // 終了通知が来ない端末への保険
+          synth.speak(u);
+        });
+      },
+    };
+  })();
+
+  /* =====================================================
+     部品3：GASとの通信と、アイデア記録
+     接続設定（URLと合言葉）があればGAS（スプレッドシート）へ、
+     なければ、アイデアはこの端末の中へ保存する。
+     URLと合言葉は、この端末のlocalStorageにだけ保存され、このファイルには含まれない。
+     ===================================================== */
+  const Cfg = {
+    get() {
+      try {
+        const v = JSON.parse(localStorage.getItem('friday.cfg') || '{}');
+        return v && typeof v === 'object' ? v : {};
+      } catch (e) { return {}; }
+    },
+    set(c) {
+      try { localStorage.setItem('friday.cfg', JSON.stringify(c)); return true; } catch (e) { return false; }
+    },
+    clear() { try { localStorage.removeItem('friday.cfg'); } catch (e) { /* 無視 */ } },
+    ready() { const c = this.get(); return !!(c.url && c.token); },
+  };
+  const GAS_URL_RE = /^https:\/\/script\.google\.com\/.+\/exec$/;
+
+  // text/plain で送ると事前確認(preflight)が要らず、GASでも通信できる
+  async function callGas(payload, cfg) {
+    const c = cfg || Cfg.get();
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 30000);
+    let j;
+    try {
+      const r = await fetch(c.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(Object.assign({ token: c.token }, payload)),
+        signal: ctrl.signal,
+      });
+      j = await r.json();
+    } catch (e) {
+      const err = new Error('network');
+      err.code = 'network';
+      throw err;
+    } finally {
+      clearTimeout(to);
+    }
+    if (!j || !j.ok) {
+      const code = (j && j.error) || 'error';
+      const err = new Error(code);
+      err.code = code;
+      throw err;
+    }
+    return j;
+  }
+
+  const Ideas = {
+    total: 0,
+    error: false,
+    local: [],
+    loadLocal() {
+      try {
+        const v = JSON.parse(localStorage.getItem('jarvis.ideas') || '[]');
+        this.local = Array.isArray(v) ? v : [];
+      } catch (e) { this.local = []; }
+    },
+    saveLocal() { try { localStorage.setItem('jarvis.ideas', JSON.stringify(this.local)); } catch (e) { /* 無視 */ } },
+    async add(t) {
+      if (Cfg.ready()) {
+        const r = await callGas({ action: 'add', text: t });
+        this.total = r.total; this.error = false;
+        return r.total;
+      }
+      this.local.push({ t, at: Date.now() });
+      this.saveLocal();
+      this.total = this.local.length;
+      return this.total;
+    },
+    async recent(n) {
+      if (Cfg.ready()) {
+        const r = await callGas({ action: 'list', limit: n });
+        this.total = r.total; this.error = false;
+        return { items: (r.items || []).map((x) => String(x.t)), total: r.total };
+      }
+      this.total = this.local.length;
+      return { items: this.local.slice().reverse().slice(0, n).map((x) => x.t), total: this.local.length };
+    },
+    async removeLast() {
+      if (Cfg.ready()) {
+        const r = await callGas({ action: 'removeLast' });
+        this.total = r.total; this.error = false;
+        return r.removed;
+      }
+      const x = this.local.pop();
+      this.saveLocal();
+      this.total = this.local.length;
+      return x ? x.t : null;
+    },
+    async refresh() {
+      this.error = false;
+      try { await this.recent(0); } catch (e) { this.error = true; }
+      updateIdeaCount();
+    },
+    async start() {
+      this.loadLocal();
+      await this.refresh();
+    },
+  };
+
+  function updateIdeaCount() {
+    let t = Ideas.error ? 'アイデア 接続エラー' : 'アイデア ' + Ideas.total + '件';
+    if (!Ideas.error && !Cfg.ready()) t += '・端末内';
+    $('#ideaCount').textContent = t;
+  }
+
+  /* =====================================================
+     部品3b：AIとの会話（GASを通して、Geminiに問い合わせる）
+     AIの種類を変えるときは、GAS側を直すだけで済み、この画面は変えなくてよい。
+     ===================================================== */
+  const AI = {
+    turns: [], // 直前のやり取り { role:'user'|'model', text }
+    async ask(text, withIdeas) {
+      if (!Cfg.ready()) { const err = new Error('not_configured'); err.code = 'not_configured'; throw err; }
+      const hist = this.turns.slice(-12);
+      const r = await callGas({
+        action: 'chat', text, persona: Theme.key, history: hist, withIdeas: !!withIdeas,
+      });
+      const reply = String(r.reply || '').trim();
+      if (!reply) { const err = new Error('empty'); err.code = 'empty_reply'; throw err; }
+      this.turns.push({ role: 'user', text }, { role: 'model', text: reply });
+      if (this.turns.length > 24) this.turns.splice(0, this.turns.length - 24);
+      return reply;
+    },
+    explain(e) {
+      const code = e && e.code;
+      const M = {
+        not_configured: 'AIとの会話には、設定でGASのURLと合言葉の入力が必要です。',
+        unauthorized: '合言葉が違うようです。設定でご確認ください。',
+        no_key: 'GASにGeminiのキーが登録されていません。スクリプト プロパティをご確認ください。',
+        limit: '本日の会話の上限に達しました。明日またお話しください。',
+        network: 'GASに接続できませんでした。通信の状態とURLをご確認ください。',
+        empty_reply: 'うまく答えを組み立てられませんでした。言い方を変えて、もう一度お願いします。',
+      };
+      return M[code] || 'AIとの通信に失敗しました。もう一度お試しください。';
+    },
+  };
+
+  /* =====================================================
+     部品4：頭脳
+     短い決まった言い方はルールで処理し、それ以外はAIに渡す。
+     ===================================================== */
+  const Brain = {
+    async reply(text) {
+      const s = text.trim();
+      const n = s.replace(/[\s　]+/g, '');
+      const cut = (x, k) => (x.length > k ? x.slice(0, k) + '…' : x);
+      const now = new Date();
+      const youbi = ['日', '月', '火', '水', '木', '金', '土'];
+
+      // ルールで処理するのは「短い決まった言い方」だけ。長い発言や相談は、すべてAIに任せる
+      const short = (k) => n.length <= k;
+
+      // 一覧
+      if (/^(アイデア|メモ)?(の)?(一覧|リスト)(を|は)?(見せて|教えて|読み上げて|ください|お願い)?[。？?]?$/.test(n)
+        || (short(20) && /(アイデア|メモ).*(見せて|教えて|読み上げ)/.test(n))) {
+        const r = await Ideas.recent(5);
+        updateIdeaCount();
+        if (!r.total) return '記録されたアイデアは、まだありません。';
+        return '直近のアイデアです。全' + r.total + '件のうち、' + r.items.length + '件をお伝えします。'
+          + r.items.map((x, i) => (i + 1) + '件目、' + cut(x, 30) + '。').join('');
+      }
+      // 削除
+      if (/^(削除|取り消し|取消)/.test(n) || (short(15) && /(最後|直前).*(削除|消)/.test(n))) {
+        const x = await Ideas.removeLast();
+        updateIdeaCount();
+        return x ? '承知しました。「' + cut(x, 20) + '」を削除しました。' : '削除できるアイデアはありません。';
+      }
+      // 記録：「メモ、〇〇」「アイデア 〇〇」（区切りあり）／「メモ〇〇」（区切りなし。助詞で始まる場合は除く）／「〇〇をメモして」
+      const m = s.match(/^(?:メモ|記録|アイデア)[:：、,\s　]+(.+)$/)
+        || s.match(/^(?:メモ|記録)([^をはがのにでともへ、。\s].*)$/)
+        || s.match(/^(.+?)(?:を|って)?メモして(?:ください|くれ)?[。.]?$/);
+      if (m && m[1]) {
+        const c = await Ideas.add(m[1].trim());
+        updateIdeaCount();
+        return '承知しました。アイデアを記録しました。現在、' + c + '件です。';
+      }
+      // カレンダー（準備中）
+      if (short(16) && /予定|カレンダー|スケジュール/.test(n)) {
+        return 'カレンダーとの接続は、次の段階で追加いたします。現時点では、お答えできません。';
+      }
+      // 時刻・日付
+      if (short(14) && /(何時|時刻|今の時間|現在の時間)/.test(n)) {
+        return '現在、' + now.getHours() + '時' + now.getMinutes() + '分です。';
+      }
+      if (short(14) && /(何日|何曜日|日付)/.test(n)) {
+        return '本日は' + (now.getMonth() + 1) + '月' + now.getDate() + '日、' + youbi[now.getDay()] + '曜日です。';
+      }
+      // ヘルプ・お礼・挨拶
+      if (short(14) && /(できること|ヘルプ|使い方|何ができる)/.test(n)) {
+        return '現在は、アイデアの記録、一覧の表示、時刻と日付のご案内が可能です。記録するときは、「メモ」に続けてお話しください。それ以外は、AIがお答えします。';
+      }
+      if (short(12) && /ありがとう|助かった/.test(n)) return 'どういたしまして。';
+      if (short(12) && (Theme.cur.wake.test(n) || /(こんにちは|こんばんは|おはよう)/.test(n))) {
+        return ['はい、こちらにおります。ご用件をどうぞ。', 'お待ちしておりました。いかがなさいますか。'][Math.floor(Math.random() * 2)];
+      }
+      // ここから先は、AIに任せる
+      try {
+        return await AI.ask(s, /(アイデア|メモ|記録)/.test(n));
+      } catch (e) {
+        return AI.explain(e);
+      }
+    },
+  };
+
+  /* =====================================================
+     アプリ本体：会話の流れをつなぐ
+     ===================================================== */
+  const log = $('#log');
+  const input = $('#msg');
+  const micBtn = $('#mic');
+  let turn = 0;          // 新しい操作が入ったら古い応答を打ち切るための番号
+  let rec = null;
+  let listening = false;
+
+  function addLog(kind, text) {
+    const p = document.createElement('p');
+    p.className = kind;
+    p.textContent = text;
+    log.appendChild(p);
+    while (log.children.length > 40) log.removeChild(log.firstChild);
+    log.scrollTop = log.scrollHeight;
+    return p;
+  }
+
+  function typeInto(el, text, perChar) {
+    return new Promise((resolve) => {
+      if (reduce) { el.textContent = text; resolve(); return; }
+      let i = 0;
+      const id = setInterval(() => {
+        i += 1;
+        el.textContent = text.slice(0, i);
+        log.scrollTop = log.scrollHeight;
+        if (i >= text.length) { clearInterval(id); resolve(); }
+      }, perChar);
+    });
+  }
+
+  async function say(text, my) {
+    HUD.setState('speaking');
+    const el = addLog('ai', '');
+    const typing = typeInto(el, text, 45);
+    const talk = Voice.speak(text).then((spoke) => (spoke ? null : sleep(text.length * 60 + 300)));
+    await Promise.all([typing, talk]);
+    if (my === turn) HUD.setState('idle');
+  }
+
+  async function submit(text) {
+    const my = ++turn;
+    Voice.stop();
+    addLog('you', text);
+    HUD.setState('thinking');
+    const minWait = sleep(reduce ? 300 : 700 + Math.random() * 500); // 考え中の演出の最低時間
+    let reply;
+    try {
+      reply = await Brain.reply(text);
+    } catch (e) {
+      reply = AI.explain(e);
+      if (e && (e.code === 'network' || e.code === 'unauthorized')) {
+        Ideas.error = true;
+        updateIdeaCount();
+      }
+    }
+    await minWait;
+    if (my !== turn) return;
+    await say(reply, my);
+  }
+
+  /* ---- 音声入力（ブラウザ標準の音声認識） ---- */
+  function startListening() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      addLog('sys', 'この環境では音声入力を使えません。文字で入力してください。');
+      return;
+    }
+    turn += 1;
+    Voice.stop();
+    let finalText = '';
+    let errCode = '';
+    rec = new SR();
+    rec.lang = 'ja-JP';
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.onstart = () => {
+      listening = true;
+      micBtn.setAttribute('aria-pressed', 'true');
+      HUD.setState('listening');
+    };
+    rec.onresult = (e) => {
+      let t = '';
+      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+      input.value = t;
+      if (e.results[e.results.length - 1].isFinal) finalText = t;
+    };
+    rec.onerror = (e) => { errCode = e.error || ''; };
+    rec.onend = () => {
+      listening = false;
+      micBtn.setAttribute('aria-pressed', 'false');
+      rec = null;
+      if (finalText.trim()) {
+        input.value = '';
+        submit(finalText.trim());
+        return;
+      }
+      HUD.setState('idle');
+      if (errCode === 'not-allowed' || errCode === 'service-not-allowed') {
+        addLog('sys', 'マイクの使用が許可されていません。ブラウザの設定を確認するか、文字で入力してください。');
+      } else if (errCode === 'no-speech') {
+        addLog('sys', '音声が聞き取れませんでした。');
+      } else if (errCode && errCode !== 'aborted') {
+        addLog('sys', '音声認識に接続できませんでした。文字で入力してください。');
+      }
+    };
+    try { rec.start(); } catch (e) { rec = null; HUD.setState('idle'); }
+  }
+
+  micBtn.addEventListener('click', () => {
+    if (listening && rec) { rec.stop(); return; }
+    startListening();
+  });
+
+  $('#composer').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = input.value.trim();
+    if (!v) return;
+    input.value = '';
+    submit(v);
+  });
+
+  const muteBtn = $('#muteBtn');
+  muteBtn.addEventListener('click', () => {
+    const next = !Voice.muted;
+    Voice.setMuted(next);
+    muteBtn.setAttribute('aria-pressed', String(!next));
+    muteBtn.textContent = next ? '音声 オフ' : '音声 オン';
+  });
+
+  /* ---- 設定 ---- */
+  const dlg = $('#cfg');
+  const cfgStatus = $('#cfgStatus');
+  const urlEl = $('#cfgUrl');
+  const tokenEl = $('#cfgToken');
+  const voiceSel = $('#cfgVoice');
+  const pitchEl = $('#cfgPitch');
+
+  function readCfgForm() {
+    return { url: urlEl.value.trim(), token: tokenEl.value.trim() };
+  }
+  function checkCfgForm(c) {
+    if (!c.url || !c.token) return 'URLと合言葉の両方を入力してください。';
+    if (!GAS_URL_RE.test(c.url)) return 'URLの形が違います。「https://script.google.com/…/exec」で終わるURLを入力してください。';
+    return '';
+  }
+
+  $('#cfgTest').addEventListener('click', async () => {
+    const c = readCfgForm();
+    const bad = checkCfgForm(c);
+    if (bad) { cfgStatus.textContent = bad; return; }
+    cfgStatus.textContent = '接続を確認しています…';
+    try {
+      const r = await callGas({ action: 'list', limit: 0 }, c);
+      cfgStatus.textContent = '接続できました。保存されているアイデアは' + r.total + '件です。「保存」を押してください。';
+    } catch (e) {
+      cfgStatus.textContent = e.code === 'unauthorized'
+        ? '合言葉が違います。'
+        : e.code === 'network'
+          ? '接続できません。URL、GASの公開設定（アクセスできるユーザー：全員）、通信の状態をご確認ください。'
+          : '接続できましたが、エラーが返りました（' + e.code + '）。';
+    }
+  });
+
+  $('#cfgSave').addEventListener('click', async () => {
+    const c = readCfgForm();
+    const bad = checkCfgForm(c);
+    if (bad) { cfgStatus.textContent = bad; return; }
+    if (!Cfg.set(c)) { cfgStatus.textContent = 'この端末では保存できませんでした。ブラウザの設定をご確認ください。'; return; }
+    AI.turns = [];
+    await Ideas.refresh();
+    cfgStatus.textContent = Ideas.error ? '保存しましたが、接続に失敗しました。「接続テスト」で原因を確認してください。' : '保存しました。';
+  });
+
+  $('#cfgClear').addEventListener('click', async () => {
+    Cfg.clear();
+    urlEl.value = ''; tokenEl.value = '';
+    AI.turns = [];
+    await Ideas.refresh();
+    cfgStatus.textContent = '接続を解除しました。アイデアはこの端末の中に保存されます。';
+  });
+
+  function refreshVoiceUI() {
+    const list = Voice.list();
+    const pref = Voice.getPref(Theme.key);
+    voiceSel.innerHTML = '';
+    const auto = document.createElement('option');
+    auto.value = '';
+    auto.textContent = '自動（' + (Theme.cur.voice === 'male' ? '男性' : '女性') + 'の声を探す）';
+    voiceSel.appendChild(auto);
+    list.forEach((v) => {
+      const o = document.createElement('option');
+      o.value = v.name;
+      o.textContent = v.name;
+      voiceSel.appendChild(o);
+    });
+    voiceSel.value = pref.name && list.some((v) => v.name === pref.name) ? pref.name : '';
+    pitchEl.value = String(pref.pitch || 1);
+    $('#cfgPitchVal').textContent = Number(pitchEl.value).toFixed(1);
+    $('#cfgVoiceOf').textContent = Theme.cur.kana;
+    $('#cfgVoiceInfo').textContent = !Voice.available
+      ? 'このブラウザは読み上げに対応していません。'
+      : list.length
+        ? '現在使っている声：' + (Voice.current || '標準') + '。この端末の日本語の声：' + list.map((v) => v.name).join('、')
+        : 'この端末では日本語の声が見つかりません。';
+  }
+  function voiceSample() {
+    if (Voice.muted) { cfgStatus.textContent = '音声がオフです。右上の「音声」をオンにしてください。'; return; }
+    Voice.speak(Theme.cur.kana + '、起動しました。ご用件をどうぞ。');
+  }
+  function saveVoicePref() {
+    Voice.setPref(Theme.key, { name: voiceSel.value, pitch: Number(pitchEl.value) });
+  }
+  voiceSel.addEventListener('change', () => { saveVoicePref(); voiceSample(); });
+  pitchEl.addEventListener('input', () => { $('#cfgPitchVal').textContent = Number(pitchEl.value).toFixed(1); });
+  pitchEl.addEventListener('change', () => { saveVoicePref(); voiceSample(); });
+  $('#cfgVoiceTest').addEventListener('click', voiceSample);
+  Voice.onVoicesChanged(refreshVoiceUI);
+
+  $('#cfgBtn').addEventListener('click', () => {
+    const c = Cfg.get();
+    urlEl.value = c.url || '';
+    tokenEl.value = c.token || '';
+    refreshVoiceUI();
+    cfgStatus.textContent = '';
+    dlg.showModal();
+  });
+  $('#cfgClose').addEventListener('click', () => dlg.close());
+
+  /* ---- キャラクター切り替え ---- */
+  function applyTheme(key) {
+    if (!THEMES[key]) key = 'friday';
+    Theme.key = key;
+    const t = THEMES[key];
+    if (key === 'jarvis') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', key);
+    document.title = t.name;
+    $('.wordmark').textContent = t.name;
+    $('#msg').placeholder = t.kana + 'に話しかける';
+    $('#startBtn').setAttribute('aria-label', t.name + 'を起動する');
+    $('#hud').setAttribute('aria-label', t.name + ' の円形ディスプレイ');
+    $('meta[name="theme-color"]').setAttribute('content', t.meta);
+    Voice.setKind(t.voice, key);
+    refreshVoiceUI();
+    document.querySelectorAll('[data-theme-btn]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(b.dataset.themeBtn === key));
+    });
+  }
+  document.querySelectorAll('[data-theme-btn]').forEach((b) => {
+    b.addEventListener('click', () => {
+      applyTheme(b.dataset.themeBtn);
+      AI.turns = [];
+      try { localStorage.setItem('friday.theme', Theme.key); } catch (e) { /* 無視 */ }
+      cfgStatus.textContent = '切り替えました。';
+    });
+  });
+  (function () {
+    let saved = 'friday';
+    try { saved = localStorage.getItem('friday.theme') || 'friday'; } catch (e) { /* 無視 */ }
+    applyTheme(saved);
+  })();
+
+  /* ---- 時計 ---- */
+  function tick() {
+    const d = new Date();
+    const p = (x) => String(x).padStart(2, '0');
+    $('#clock').textContent = p(d.getHours()) + ':' + p(d.getMinutes());
+    $('#date').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日（' + '日月火水木金土'[d.getDay()] + '）';
+  }
+  tick();
+  setInterval(tick, 1000);
+  updateIdeaCount();
+  Ideas.start();
+
+  /* ---- 起動 ---- */
+  $('#startBtn').addEventListener('click', async () => {
+    Voice.prime();
+    const start = $('#start');
+    start.classList.add('gone');
+    setTimeout(() => { start.hidden = true; }, 700);
+    document.body.classList.add('booted');
+    const my = ++turn;
+    HUD.setState('thinking');
+    const lines = ['HUDを展開しています', '音声システムを確認しています', 'アイデア記録を準備しています'];
+    for (const l of lines) {
+      addLog('sys', l);
+      await sleep(reduce ? 150 : 650);
+    }
+    await sleep(reduce ? 100 : 500);
+    if (!Cfg.ready()) {
+      addLog('sys', 'GASに接続されていません。右上の「設定」からURLと合言葉を入力すると、AIとの会話とスプレッドシートへの保存が使えます。');
+    }
+    if (Theme.cur.voice === 'male' && Voice.available && !Voice.matched) {
+      addLog('sys', '男性の声がこの端末に見つかりません。iPhoneでは「設定」→「アクセシビリティ」→「読み上げコンテンツ」→「声」→「日本語」から追加できます。');
+    }
+    await say(Theme.cur.greet, my);
+  });
+})();
+</script>
+</body>
+</html>
